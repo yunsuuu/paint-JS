@@ -11,6 +11,7 @@ Painting Board made with VaillaJS
 ## 기능추가
 ### mouseover
 * mousedown한 상태에서 그림 그리다가 캔버스 밖으로 cursor 나감 > 다시 캔버스 안으로 들어왔을 때도 line 유지
+
 function onMouseOver(event){
     const x = event.offsetX;
     const y = event.offsetY;
@@ -23,7 +24,7 @@ if(canvas){
 
 ### reset
 * 리셋버튼으로 브라우저 새로고침
-* 
+
 function handleResetClick(){
     window.location.reload();
 }
