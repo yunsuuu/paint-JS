@@ -1,9 +1,11 @@
 // Array.from 메소드는 object로부터 array를 만듦
 // console.log(Array.from(colors));
 // ctx.fillRect(50, 20, 100, 40); // x,y 좌표 / width, height 설정해서 도형 생성
-// window.location.reload(); // 브라우저 새로고침
 
-// 우클릭 제거 (*contextmenu*)
+// 브라우저 새로고침
+// window.location.reload(); // 
+
+// 우클릭 방지 (*contextmenu*)
 // if(canvas){
 //     canvas.addEventListener("contextmenu", handleClickCM);
 // }
@@ -12,12 +14,13 @@
 // }
 
 const canvas = document.getElementById("jsCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d"); // 2차원
+const arcBtn = document.getElementById("jsArc");
+const modeBtn = document.getElementById("jsMode");
+const saveBtn = document.getElementById("jsSave");
+const resetBtn = document.getElementById("jsReset");
 const colors = document.getElementsByClassName("jsColor");
 const range = document.getElementById("jsRange");
-const mode = document.getElementById("jsMode");
-const save = document.getElementById("jsSave");
-const reset = document.getElementById("jsReset");
 
 // 반복되는 색상(#2c2c2c)을 INITIAL_COLOR 변수로 저장&초기화
 // ctx.strokeStyle = "#2c2c2c"; // paint mode line 색상
@@ -25,11 +28,11 @@ const reset = document.getElementById("jsReset");
 const INITIAL_COLOR = "#2c2c2c";
 const CANVAS_SIZE = 700;
 
-// canvas element(픽셀 같은) 너비, 높이도 정해줘야 함수 실행됨
+// canvas size 설정 (css, js 사이즈 모두 지정)
 canvas.width = CANVAS_SIZE;
 canvas.height = CANVAS_SIZE;
 
-// 이미지 저장시 나타나는 canvas bg color 설정
+// 이미지 저장시 나타나는 canvas bg color 설정(안해주면 투명 bg로 저장)
 ctx.fillStyle = "#fff";
 ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
@@ -37,14 +40,17 @@ ctx.strokeStyle = INITIAL_COLOR;
 ctx.fillStyle = INITIAL_COLOR;
 ctx.lineWidth = 2.5; // 칠해지는 라인 너비
 
-let painting = false; // painting 변수의 기본값은 false
-let filling = false; // FILL button clikc -> canvas 전체 색칠
+let painting = false;
+let filling = false;
+let arc = false;
+let arcX;
+let arcY;
 
-function stopPainting(){
+function stopPainting(){ // mouseup
     painting = false;
 }
 
-function startPainting(){
+function startPainting(){ // mousedown
     painting = true;
 }
 
@@ -52,15 +58,24 @@ function startPainting(){
 function onMouseMove(event){
     const x = event.offsetX;
     const y = event.offsetY;
-    if(!painting){ // !false = (true)
-        // console.log("creating path in", x, y);
-        ctx.beginPath(); // 경로 생성
-        ctx.moveTo(x, y); // 선 시작 좌표
-    } else { // false
-        // console.log("creating line in", x, y);
-        ctx.lineTo(x, y); // 선 끝 좌표(현재의 sub-path에서 마지막 지점을 특정 좌표로 연결)
-        ctx.stroke(); // 선 그리기
+    // not painting (painting === false)
+    if(!filling && !arc){
+        if(!painting){
+            // console.log("creating path in", x, y);
+            ctx.beginPath(); // 선 그리기 시작을 선언
+            ctx.moveTo(x, y); // 좌표 이동
+        } else {
+            // console.log("creating line in", x, y);
+            ctx.lineTo(x, y); // x, y 좌표 연결
+            ctx.stroke(); // 선 그리기
+        }
     }
+}
+
+function onMouseOver(event){
+    const x = event.offsetX;
+    const y = event.offsetY;
+    ctx.moveTo(x, y);
 }
 
 function handleColorClick(event){
@@ -74,14 +89,41 @@ function handleRangeChange(event){
     ctx.lineWidth = size;
 }
 
+function handleArcClick(){
+    if(arc === true){ // paint mode
+        arc = false;
+        arcBtn.innerText = "arc";
+    } else { // arc mode
+        arc = true;
+        arcBtn.innerText = "paint";
+    }
+}
+
+function arcInit(event){
+    if(arc){
+        ctx.beginPath();
+        arcX = event.offsetX;
+		arcY = event.offsetY;
+    }
+}
+
+function arcPainting(event){
+    if(arc){
+        const x = arcX - event.offsetX;
+		const y = arcY - event.offsetY;
+        ctx.arc(arcX, arcY, 80, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
+}
+
 // 기본적으로 painting mode, 클릭하면 filling mode
 function handleModeClick(){
     if(filling === true){ // paint mode
         filling = false;
-        mode.innerText = "Fill";
+        modeBtn.innerText = "fill";
     } else { // fill mode
         filling = true;
-        mode.innerText = "Paint";
+        modeBtn.innerText = "paint";
     }
 }
 
@@ -93,7 +135,7 @@ function handleCanvasClick(){
     }
 }
 
-function saveBtn(){
+function handleSaveClick(){
     const image = canvas.toDataURL(); // 기본값 png (jpeg 저장시 괄호 안에 "jpeg")
     const link = document.createElement("a"); // <a href> 생성
     link.href = image;
@@ -101,7 +143,7 @@ function saveBtn(){
     link.click();
 }
 
-function resetBtn(){
+function handleResetClick(){
     window.location.reload(); // 브라우저 새로고침
 }
 
@@ -113,9 +155,12 @@ if(canvas){ // canvas 위에서 발생하는 이벤트
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mousedown", startPainting);
     canvas.addEventListener("mouseup", stopPainting);
-    canvas.addEventListener("mouseleave", stopPainting);
+    canvas.addEventListener("mouseover", onMouseOver);
+    // canvas.addEventListener("mouseleave", stopPainting);
     canvas.addEventListener("click", handleCanvasClick);
     canvas.addEventListener("contextmenu", handleClickCM);
+    canvas.addEventListener("mousedown", arcInit);
+	canvas.addEventListener("mouseup", arcPainting);
 }
 
 Array.from(colors).forEach(color => color.addEventListener("click", handleColorClick));
@@ -124,14 +169,18 @@ if(range){
     range.addEventListener("input", handleRangeChange);
 }
 
-if(mode){
-    mode.addEventListener("click", handleModeClick);
+if(arcBtn){
+    arcBtn.addEventListener("click", handleArcClick);
 }
 
-if(save){
-    save.addEventListener("click", saveBtn);
+if(modeBtn){
+    modeBtn.addEventListener("click", handleModeClick);
 }
 
-if(reset){
-    reset.addEventListener("click", resetBtn);
+if(saveBtn){
+    saveBtn.addEventListener("click", handleSaveClick);
+}
+
+if(resetBtn){
+    resetBtn.addEventListener("click", handleResetClick);
 }
