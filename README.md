@@ -9,7 +9,7 @@ Painting Board made with VaillaJS
 * 호출을 얻기 위해 취해줘야 하는 코드
 
 ## 기능추가
-1) mouseover
+### mouseover
 function onMouseOver(event){
     const x = event.offsetX;
     const y = event.offsetY;
@@ -20,14 +20,14 @@ if(canvas){
     canvas.addEventListener("mouseover", onMouseOver);
 }
 
-2) reset
+### reset
 function handleResetClick(){
     window.location.reload();
 }
 
-3) 원그리기
-- html 코드에서 fill 버튼 옆에 arc 버튼 추가
-- FILL, PAINT 버튼과 동일하게 작동하는 코드 작성
+### 원그리기
+* html 코드에서 fill 버튼 옆에 arc 버튼 추가
+* FILL, PAINT 버튼과 동일하게 작동하는 코드 작성
 
 function handleArcClick(){
     if(arc === true){ // paint mode
